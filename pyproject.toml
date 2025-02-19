@@ -1,0 +1,14 @@
+[project]
+name = "msig"
+version = "0.1.0"
+description = "Многопользовательская интерактивная игра для стримеров"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.10.6",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+]

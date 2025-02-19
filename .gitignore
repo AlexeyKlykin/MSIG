@@ -2,3 +2,7 @@
 .obsidian/*
 rgg-table_Kanban-доска.md
 schema_ver2.canvas
+game_engine/tests/__pycache__
+game_engine/tests/__pycache__/*
+game_engine/__pycache__
+game_engine/__pycache__/*
