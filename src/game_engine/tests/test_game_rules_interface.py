@@ -1,6 +1,5 @@
 from typing import List
-from pydantic import BaseConfig
-from pytest import fixture
+from pytest import fixture, mark
 
 from game_engine.game_rules_interface import (
     DataBaseConfig,
@@ -11,6 +10,7 @@ from game_engine.game_rules_interface import (
     GameRulesInterface,
     DictGameRules,
 )
+import json
 
 
 @fixture(scope="class")
@@ -32,10 +32,6 @@ def setup_struct():
         sub_point_list=sub_point_list,
     )
 
-    write_data = [
-        struct_rule,
-    ]
-
     config: DataBaseConfig = NotConfig(
         db_type="not config",
         db_host="local",
@@ -44,33 +40,41 @@ def setup_struct():
         db_name="msig",
         db_password="vbnzq",
     )
-    cli = GameRulesInterface(config=config)
-    cli.game_rules = write_data
-
-    # config_json: JsonConfig = JsonConfig(db_name="config.json")
-
-    # with JsonConnectionEngine(config_json) as conn:
-    #     conn.write(config_json.model_dump_json())
-
-    yield cli
-
-    cli.game_rules = []
+    gir = GameRulesInterface(config=config)
+    gir.game_rules = [
+        struct_rule,
+    ]
+    yield gir
 
 
-# class TestConnectDatabase:
-#     """Тест должен проверять соединение с бд"""
-#
-#     def test_connect_json(self):
-#         """тест: проверки соединения с json"""
-#
-#     def test_connect_pg(self):
-#         """тест: проверки соединения с postgres"""
-#
-#     def test_connect_not_config(self):
-#         """тест: проверки соединения без конфигурации"""
-#
+@mark.connect_db_rules()
+class TestConnectDatabase:
+    """Тест должен проверять соединение с бд"""
+
+    def test_connect_json_set(self, setup_struct):
+        """тест: добавление в json"""
+
+        config_json: JsonConfig = JsonConfig(db_name="config.json", db_host="w")
+        with JsonConnectionEngine(config_json) as conn:
+            conn.write(setup_struct.game_rules[0].model_dump_json())
+
+    def test_connect_json(self):
+        """тест: проверки соединения с json"""
+
+        config_json: JsonConfig = JsonConfig(db_name="config.json", db_host="r")
+        with JsonConnectionEngine(config_json) as js:
+            read_js = js.readlines()
+
+            assert read_js == [
+                '{"id":1,"title":"1. Правило 1","description":"Описание правила '
+                '1","sub_point_list":[{"id":1,"title":"1.1. '
+                'Правило","description":"Описание правила 1"},{"id":2,"title":"1.2. '
+                'Правило","description":"Описание правила 2"},{"id":3,"title":"1.3. '
+                'Правило","description":"Описание правила 3"}]}',
+            ]
 
 
+@mark.interface_rules()
 class TestInterfaceGameRules:
     """Тест интерфейса игровых правил"""
 

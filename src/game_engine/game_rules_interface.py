@@ -10,7 +10,16 @@ from psycopg import connect
 from psycopg.conninfo import make_conninfo
 from typing import IO, Any, Dict, List, Protocol
 from psycopg.rows import tuple_row
-from pydantic import BaseModel, Field, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    Json,
+    computed_field,
+    field_validator,
+    model_validator,
+    validator,
+)
+from pydantic_core import to_json
 from pydantic_settings import BaseSettings
 from typing_extensions import Annotated
 import secrets
@@ -32,6 +41,37 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
+
+
+class ConnectionProtocol(Protocol):
+    """Протокол для менеджера"""
+
+    def __enter__(self) -> object:
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            pass
+
+
+class SqliteConnectionEngine(ConnectionProtocol):
+    """Контекстный менеджер для
+    подключения к базе данных sqlite3"""
+
+    def __init__(self, db_name):
+        self.db_name = db_name
+
+    def __enter__(self) -> sqlite3.Connection:
+        try:
+            self.conn = sqlite3.connect(self.db_name)
+            return self.conn
+
+        except sqlite3.Error as err:
+            logger.warning(f"{err} потеряно соединение")
+            raise sqlite3.Error(err, "Потеряно соединение")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.conn.close()
 
 
 class PointGameRules(BaseModel):
@@ -121,6 +161,41 @@ class DataBaseConfig(BaseSettings):
         }
 
 
+class JsonConnectionEngine(ConnectionProtocol):
+    """Менеджер для управления соединения
+    игровых правил с хранилищем"""
+
+    def __init__(self, settings: DataBaseConfig) -> None:
+        self._file_path = settings.db_name
+        self._pref = settings.db_host
+
+    def __enter__(self) -> IO:
+        self._resource = open(self._file_path, self._pref)
+        return self._resource
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._resource is not None:
+            self._resource.close()
+
+
+class PgConnectionEngine(ConnectionProtocol):
+    """Контекстный менеджер для
+    подключения к postgres"""
+
+    def __init__(self, settings: DataBaseConfig):
+        self._settings = settings
+
+    def __enter__(self):
+        self.connect = connect(
+            make_conninfo("", **self._settings.model_dump()), row_factory=tuple_row
+        )
+        return self.connect
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.connect is not None:
+            self.connect.close()
+
+
 class NotConfig(DataBaseConfig):
     """Класс конфигурации по умолчанию без сохранения"""
 
@@ -159,72 +234,6 @@ class PostgresConfig(DataBaseConfig):
     db_username: str = Field(default="myuser")
     db_password: str = Field(default="mypassword")
     db_name: str = Field(default="mydb")
-
-
-class ConnectionProtocol(Protocol):
-    """Протокол для менеджера"""
-
-    def __enter__(self) -> object:
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None:
-            pass
-
-
-class JsonConnectionEngine(ConnectionProtocol):
-    """Менеджер для управления соединения
-    игровых правил с хранилищем"""
-
-    def __init__(self, settings: DataBaseConfig = JsonConfig()) -> None:
-        self._file_path = settings.db_name
-        self._pref = settings.db_host
-
-    def __enter__(self) -> IO:
-        self._resource = open(self._file_path, self._pref)
-        return self._resource
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._resource is not None:
-            self._resource.close()
-
-
-class PgConnectionEngine(ConnectionProtocol):
-    """Контекстный менеджер для
-    подключения к postgres"""
-
-    def __init__(self, settings: DataBaseConfig):
-        self._settings = settings
-
-    def __enter__(self):
-        self.connect = connect(
-            make_conninfo("", **self._settings.model_dump()), row_factory=tuple_row
-        )
-        return self.connect
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.connect is not None:
-            self.connect.close()
-
-
-class SqliteConnectionEngine(ConnectionProtocol):
-    """Контекстный менеджер для
-    подключения к базе данных sqlite3"""
-
-    def __init__(self, db_name):
-        self.db_name = db_name
-
-    def __enter__(self) -> sqlite3.Connection:
-        try:
-            self.conn = sqlite3.connect(self.db_name)
-            return self.conn
-
-        except sqlite3.Error as err:
-            logger.warning(f"{err} потеряно соединение")
-            raise sqlite3.Error(err, "Потеряно соединение")
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.conn.close()
 
 
 class TypeUndefind(Exception): ...

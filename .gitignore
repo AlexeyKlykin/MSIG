@@ -12,3 +12,4 @@ src/msig
 src/config.json
 src/game_rules.db
 src/game_rules.json
+config.json
