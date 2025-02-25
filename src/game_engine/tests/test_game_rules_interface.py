@@ -4,6 +4,8 @@ from pytest import fixture
 
 from game_engine.game_rules_interface import (
     DataBaseConfig,
+    JsonConfig,
+    JsonConnectionEngine,
     NotConfig,
     PointGameRules,
     GameRulesInterface,
@@ -45,22 +47,28 @@ def setup_struct():
     cli = GameRulesInterface(config=config)
     cli.game_rules = write_data
 
+    # config_json: JsonConfig = JsonConfig(db_name="config.json")
+
+    # with JsonConnectionEngine(config_json) as conn:
+    #     conn.write(config_json.model_dump_json())
+
     yield cli
 
     cli.game_rules = []
 
 
-class TestConnectDatabase:
-    """Тест должен проверять соединение с бд"""
-
-    def test_connect_json(self):
-        """тест: проверки соединения с json"""
-
-    def test_connect_pg(self):
-        """тест: проверки соединения с postgres"""
-
-    def test_connect_not_config(self):
-        """тест: проверки соединения без конфигурации"""
+# class TestConnectDatabase:
+#     """Тест должен проверять соединение с бд"""
+#
+#     def test_connect_json(self):
+#         """тест: проверки соединения с json"""
+#
+#     def test_connect_pg(self):
+#         """тест: проверки соединения с postgres"""
+#
+#     def test_connect_not_config(self):
+#         """тест: проверки соединения без конфигурации"""
+#
 
 
 class TestInterfaceGameRules:
@@ -200,3 +208,34 @@ class TestInterfaceGameRules:
                 "title": "2. Правило 2",
             },
         ]
+
+    def test_json_get_config(self):
+        """тест: управления взаимодействия с json"""
+
+        config = JsonConfig()
+        json_setup = GameRulesInterface(config=config)
+
+        assert json_setup.config == {
+            "db_host": "w+",
+            "db_name": "msig",
+            "db_password": "vbnzq",
+            "db_port": 1,
+            "db_type": "json",
+            "db_username": "neon",
+        }
+
+    def test_json_set_config(self):
+        """тест: добавление своего конфига"""
+
+        config = JsonConfig(db_name="config.json")
+        json_setup = GameRulesInterface(config=config)
+        json_setup.config = config
+
+        assert json_setup.config == {
+            "db_host": "w+",
+            "db_name": "config.json",
+            "db_password": "vbnzq",
+            "db_port": 1,
+            "db_type": "json",
+            "db_username": "neon",
+        }

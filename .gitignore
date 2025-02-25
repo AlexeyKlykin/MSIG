@@ -7,3 +7,8 @@ src/game_engine/tests/__pycache__/*
 src/game_engine/__pycache__
 src/game_engine/__pycache__/*
 src/.env
+log.txt
+src/msig
+src/config.json
+src/game_rules.db
+src/game_rules.json

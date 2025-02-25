@@ -238,13 +238,25 @@ class GameRulesInterface:
         self._config = config
 
     @property
-    def game_rules(self) -> List[DictGameRules]:
+    def game_rules(self) -> List[DictGameRules | PointGameRules]:
         """вернуть все данные"""
 
         return self._game_rules
 
     @game_rules.setter
-    def game_rules(self, values: List):
+    def game_rules(self, values: List[DictGameRules | PointGameRules]):
         """вставить данные"""
 
         self._game_rules = values
+
+    @property
+    def config(self) -> Dict:
+        """вывести конфиг"""
+
+        return self._config.model_dump()
+
+    @config.setter
+    def config(self, config: DataBaseConfig):
+        """записать конфиг"""
+
+        self._config = config
