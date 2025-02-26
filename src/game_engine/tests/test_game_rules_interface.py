@@ -1,8 +1,8 @@
 from typing import List
 from pytest import fixture, mark
 
+from game_engine.api import Api
 from game_engine.game_rules_interface import (
-    DataBaseConfig,
     JsonConfig,
     JsonConnectionEngine,
     NotConfig,
@@ -10,7 +10,6 @@ from game_engine.game_rules_interface import (
     GameRulesInterface,
     DictGameRules,
 )
-import json
 
 
 @fixture(scope="class")
@@ -32,19 +31,121 @@ def setup_struct():
         sub_point_list=sub_point_list,
     )
 
-    config: DataBaseConfig = NotConfig(
-        db_type="not config",
-        db_host="local",
-        db_port=1,
-        db_username="neon",
-        db_name="msig",
-        db_password="vbnzq",
-    )
-    gir = GameRulesInterface(config=config)
+    gir = GameRulesInterface()
     gir.game_rules = [
         struct_rule,
     ]
+
+    api = Api()
+    config = JsonConfig()
+    api.settings = config
+    api.set_rules(gir.game_rules)
+
     yield gir
+
+
+@mark.connect_db_rules()
+class TestApiControllGameRules:
+    """Тест api для доступа к настройкам и правилам игры"""
+
+    def test_api_json_set_rules(self, setup_struct: GameRulesInterface):
+        """тест: записываем json файл данными"""
+
+        config = JsonConfig()
+        api = Api()
+        api.settings = config
+        api.set_rules(setup_struct.game_rules)
+        game_rules = api.get_rules()
+
+        assert game_rules.game_rules == [
+            {
+                "description": "Описание правила 1",
+                "id": 1,
+                "sub_point_list": [
+                    {
+                        "description": "Описание правила 1",
+                        "id": 1,
+                        "title": "1.1. Правило",
+                    },
+                    {
+                        "description": "Описание правила 2",
+                        "id": 2,
+                        "title": "1.2. Правило",
+                    },
+                    {
+                        "description": "Описание правила 3",
+                        "id": 3,
+                        "title": "1.3. Правило",
+                    },
+                ],
+                "title": "1. Правило 1",
+            },
+        ]
+
+    def test_api_json_game_rules_get(self):
+        config = JsonConfig()
+        api = Api()
+        api.settings = config
+        game_rules = api.get_rules()
+
+        assert game_rules.game_rules == [
+            {
+                "description": "Описание правила 1",
+                "id": 1,
+                "sub_point_list": [
+                    {
+                        "description": "Описание правила 1",
+                        "id": 1,
+                        "title": "1.1. Правило",
+                    },
+                    {
+                        "description": "Описание правила 2",
+                        "id": 2,
+                        "title": "1.2. Правило",
+                    },
+                    {
+                        "description": "Описание правила 3",
+                        "id": 3,
+                        "title": "1.3. Правило",
+                    },
+                ],
+                "title": "1. Правило 1",
+            },
+        ]
+
+    def test_api_not_config_rules_get(self, setup_struct: GameRulesInterface):
+        """тест: показ всех данных"""
+
+        config = NotConfig()
+        api = Api()
+        api.settings = config
+        game_rules = api.get_rules()
+        game_rules.game_rules = setup_struct.game_rules
+
+        assert [item.model_dump() for item in game_rules.game_rules] == [
+            {
+                "description": "Описание правила 1",
+                "id": 1,
+                "sub_point_list": [
+                    {
+                        "description": "Описание правила 1",
+                        "id": 1,
+                        "title": "1.1. Правило",
+                    },
+                    {
+                        "description": "Описание правила 2",
+                        "id": 2,
+                        "title": "1.2. Правило",
+                    },
+                    {
+                        "description": "Описание правила 3",
+                        "id": 3,
+                        "title": "1.3. Правило",
+                    },
+                ],
+                "title": "1. Правило 1",
+            },
+        ]
 
 
 @mark.connect_db_rules()
@@ -212,34 +313,3 @@ class TestInterfaceGameRules:
                 "title": "2. Правило 2",
             },
         ]
-
-    def test_json_get_config(self):
-        """тест: управления взаимодействия с json"""
-
-        config = JsonConfig()
-        json_setup = GameRulesInterface(config=config)
-
-        assert json_setup.config == {
-            "db_host": "w+",
-            "db_name": "msig",
-            "db_password": "vbnzq",
-            "db_port": 1,
-            "db_type": "json",
-            "db_username": "neon",
-        }
-
-    def test_json_set_config(self):
-        """тест: добавление своего конфига"""
-
-        config = JsonConfig(db_name="config.json")
-        json_setup = GameRulesInterface(config=config)
-        json_setup.config = config
-
-        assert json_setup.config == {
-            "db_host": "w+",
-            "db_name": "config.json",
-            "db_password": "vbnzq",
-            "db_port": 1,
-            "db_type": "json",
-            "db_username": "neon",
-        }

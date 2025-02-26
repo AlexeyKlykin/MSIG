@@ -13,13 +13,8 @@ from psycopg.rows import tuple_row
 from pydantic import (
     BaseModel,
     Field,
-    Json,
-    computed_field,
-    field_validator,
     model_validator,
-    validator,
 )
-from pydantic_core import to_json
 from pydantic_settings import BaseSettings
 from typing_extensions import Annotated
 import secrets
@@ -214,11 +209,10 @@ class JsonConfig(DataBaseConfig):
     """
 
     db_type: str = "json"
-    db_name: str = "game_rules.json"
     db_host: str = "w+"
     db_port: int = 1
     db_username: str = "neon"
-    db_name: str = "msig"
+    db_name: str = "game_rules.json"
     db_password: str = "vbnzq"
 
 
@@ -242,30 +236,17 @@ class TypeUndefind(Exception): ...
 class GameRulesInterface:
     """Интерфейс взаимодействия с json"""
 
-    def __init__(self, config: DataBaseConfig) -> None:
+    def __init__(self) -> None:
         self._game_rules = []
-        self._config = config
 
     @property
-    def game_rules(self) -> List[DictGameRules | PointGameRules]:
+    def game_rules(self) -> List[DictGameRules]:
         """вернуть все данные"""
 
         return self._game_rules
 
     @game_rules.setter
-    def game_rules(self, values: List[DictGameRules | PointGameRules]):
+    def game_rules(self, values: List[DictGameRules]):
         """вставить данные"""
 
         self._game_rules = values
-
-    @property
-    def config(self) -> Dict:
-        """вывести конфиг"""
-
-        return self._config.model_dump()
-
-    @config.setter
-    def config(self, config: DataBaseConfig):
-        """записать конфиг"""
-
-        self._config = config
