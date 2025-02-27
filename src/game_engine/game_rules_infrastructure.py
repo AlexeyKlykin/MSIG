@@ -4,6 +4,8 @@
 Интерфейс позволяет добавлять правила
 """
 
+import secrets
+import string
 import logging
 import sqlite3
 from psycopg import connect
@@ -17,8 +19,6 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings
 from typing_extensions import Annotated
-import secrets
-import string
 
 
 def generate_password(length: int = 12) -> str:
@@ -42,10 +42,12 @@ class ConnectionProtocol(Protocol):
     """Протокол для менеджера"""
 
     def __enter__(self) -> object:
+        logger.info("Соединение открыто")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is not None:
+            logger.info("Соединение закрыто")
             pass
 
 
@@ -166,11 +168,13 @@ class JsonConnectionEngine(ConnectionProtocol):
 
     def __enter__(self) -> IO:
         self._resource = open(self._file_path, self._pref)
+        logger.info("json file is open")
         return self._resource
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._resource is not None:
             self._resource.close()
+        logger.info("json file is close")
 
 
 class PgConnectionEngine(ConnectionProtocol):
@@ -243,10 +247,13 @@ class GameRulesInterface:
     def game_rules(self) -> List[DictGameRules]:
         """вернуть все данные"""
 
+        logger.info("возврат правил")
         return self._game_rules
 
     @game_rules.setter
     def game_rules(self, values: List[DictGameRules]):
         """вставить данные"""
 
-        self._game_rules = values
+        if isinstance(values, List):
+            self._game_rules = values
+        logger.info(f"{values} записан в правила")
