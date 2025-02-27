@@ -2,11 +2,11 @@ import logging
 from typing import List, Tuple
 
 import json
+from game_engine.configs import DataBaseConfig, NotConfig
+from game_engine.connection_protocols import JsonConnectionEngine
 from game_engine.game_rules_infrastructure import (
-    DataBaseConfig,
     DictGameRules,
     GameRulesInterface,
-    JsonConnectionEngine,
     PointGameRules,
     TypeUndefind,
 )
@@ -20,20 +20,22 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 
 
-class Api:
+class GameRulesApi:
     """
     Класс контроллер обработки данных из
     разных источников на примере игровых правил
     -------------------------------------------
     settings = JsonConfig()
-    api = Api()
+    api = GameRulesApi()
     api.settings = settings
-    api.settings
+    api.settings # Pydantic class()
+    api.rules # call rules
+    api.rules = rules # set rules
     """
 
     def __init__(self) -> None:
         self._game_rules = GameRulesInterface()
-        self._settings: DataBaseConfig | None = None
+        self._settings: DataBaseConfig = NotConfig()
 
     @property
     def settings(self) -> DataBaseConfig:
@@ -43,20 +45,26 @@ class Api:
             return self._settings
 
         else:
-            logger.info("self._settings is None")
-            raise TypeUndefind("self._settings is None")
+            logger.warning(
+                """self._settings is None. 
+                Нужно добавить settings перед тем как производить операции с правилами"""
+            )
+            raise TypeUndefind(
+                "self._settings is None. Нужно задать настройки перед вызовом правил"
+            )
 
     @settings.setter
     def settings(self, values: DataBaseConfig):
         """передаем новые настройки"""
 
         if isinstance(values, DataBaseConfig):
+            logger.info(f"{self._settings} записаны")
             self._settings = values
-        logger.info(f"{self._settings} записаны")
 
     @property
     def rules(self) -> GameRulesInterface:
         """метод для публикации всех данных"""
+
         if isinstance(self._settings, DataBaseConfig):
             match self.settings.db_type:
                 case "not config":
@@ -115,7 +123,7 @@ class Api:
         """возврат правил по индексу"""
 
         try:
-            logger.warning("успешно исполнен  Api.get_by_idx")
+            logger.info("успешно исполнен  Api.get_by_idx")
             return self._game_rules.game_rules[idx]
 
         except IndexError:
@@ -126,31 +134,72 @@ class Api:
 
         try:
             if isinstance(value, DictGameRules):
-                try:
-                    if self._game_rules.game_rules[idx] != value:
-                        logger.warning(f"успешно записан {value} в Api.get_by_idx")
-                        self._game_rules.game_rules[idx] = value
+                if self._game_rules.game_rules[idx] != value:
+                    logger.warning(f"успешно записан {value} в Api.get_by_idx")
+                    self._game_rules.game_rules[idx] = value
 
-                except IndexError:
-                    logger.warning(
-                        IndexError(
-                            f"{idx} не существует в последовательности. Добавляем объект в список"
-                        )
-                    )
-                    self._game_rules._game_rules.append(value)
+        except IndexError:
+            logger.warning(
+                IndexError(
+                    f"{idx} не существует в последовательности. Добавляем объект в список"
+                )
+            )
+            self._game_rules._game_rules.append(value)
 
         except TypeError:
             logger.warning(f"Неизвестный тип {value}")
             raise TypeError("Неизвестный тип value")
 
+    def delete_by_idx(self, idx: int):
+        """метод для удаления правила по индексу"""
+
+        try:
+            del_el = self._game_rules.game_rules.pop(idx)
+            logger.info(f"выполнено удаление {del_el}")
+
+        except IndexError:
+            logger.warning("Ошибка. Недопустимый индекс элемента")
+            raise IndexError(f"Ошибка. {idx} недопустимый индекс элемента")
+
     def get_subpoint_by_idx(self, indexes: Tuple[int, int]) -> PointGameRules:
         """метод отвечающий за отображение данных из списка подпунктов"""
 
         idx, subidx = indexes
-        return self._game_rules.game_rules[idx].sub_point_list[subidx]
+
+        try:
+            logger.info(f"получено правило по индексам {indexes}")
+            return self._game_rules.game_rules[idx].sub_point_list[subidx]
+
+        except IndexError as err:
+            logger.warning(f"Ошибка индекса по адресам {indexes}")
+            raise IndexError(f"Ошибка индекса {err}")
 
     def set_subpoint_by_idx(self, indexes: Tuple[int, int], value: PointGameRules):
         """метод записи данных в список подправил"""
 
         idx, subidx = indexes
-        self._game_rules.game_rules[idx].sub_point_list[subidx] = value
+
+        try:
+            if isinstance(value, PointGameRules):
+                self._game_rules.game_rules[idx].sub_point_list[subidx] = value
+
+        except IndexError as err:
+            logger.warning(
+                f"Ошибка объявления элемента {value} по индексам {indexes}. {err}"
+            )
+            self._game_rules.game_rules[idx].sub_point_list.append(value)
+
+    def delete_subpoint_by_idx(self, indexes: Tuple[int, int]):
+        """метод удаления подправила по индексу"""
+
+        idx, subidx = indexes
+
+        try:
+            del_el = self._game_rules.game_rules[idx].sub_point_list.pop(subidx)
+            logger.info(f"выполнено удаление {del_el}")
+
+        except IndexError:
+            logger.warning("Ошибка. Недопустимый индекс элемента")
+            raise IndexError(
+                f"Ошибка. {indexes} недопустимый индекс правила или подправила"
+            )

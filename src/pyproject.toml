@@ -18,6 +18,7 @@ dev = [
 
 [tool.pytest.ini_options]
 markers = [
-    "infrastructure_rules",
+    "interface_rules",
     "connect_db_rules",
+    "api_rules",
 ]

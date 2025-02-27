@@ -4,29 +4,14 @@
 Интерфейс позволяет добавлять правила
 """
 
-import secrets
-import string
 import logging
-import sqlite3
-from psycopg import connect
-from psycopg.conninfo import make_conninfo
-from typing import IO, Any, Dict, List, Protocol
-from psycopg.rows import tuple_row
+from typing import List
 from pydantic import (
     BaseModel,
     Field,
     model_validator,
 )
-from pydantic_settings import BaseSettings
 from typing_extensions import Annotated
-
-
-def generate_password(length: int = 12) -> str:
-    """Генерирует случайный пароль заданной длины."""
-
-    characters = string.ascii_letters + string.digits + string.punctuation
-    password = "".join(secrets.choice(characters) for _ in range(length))
-    return password
 
 
 logging.basicConfig(
@@ -36,39 +21,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
-
-
-class ConnectionProtocol(Protocol):
-    """Протокол для менеджера"""
-
-    def __enter__(self) -> object:
-        logger.info("Соединение открыто")
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None:
-            logger.info("Соединение закрыто")
-            pass
-
-
-class SqliteConnectionEngine(ConnectionProtocol):
-    """Контекстный менеджер для
-    подключения к базе данных sqlite3"""
-
-    def __init__(self, db_name):
-        self.db_name = db_name
-
-    def __enter__(self) -> sqlite3.Connection:
-        try:
-            self.conn = sqlite3.connect(self.db_name)
-            return self.conn
-
-        except sqlite3.Error as err:
-            logger.warning(f"{err} потеряно соединение")
-            raise sqlite3.Error(err, "Потеряно соединение")
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.conn.close()
 
 
 class PointGameRules(BaseModel):
@@ -112,126 +64,6 @@ class DictGameRules(PointGameRules):
             for spl in self.sub_point_list:
                 spl.title = f"{self.id}.{spl.id}. {spl.title}"
         return self
-
-
-class DataBaseConfig(BaseSettings):
-    """Класс структуры для настроек подключения к базам данных"""
-
-    db_type: Annotated[str, Field(alias="db_type", description="Тип базы данных")]
-    db_host: Annotated[
-        str, Field(default="localhost", alias="db_host", description="Хост базы данных")
-    ]
-    db_port: Annotated[
-        int,
-        Field(
-            default=4040,
-            alias="db_port",
-            description="Порт базы данных",
-        ),
-    ]
-    db_username: Annotated[
-        str,
-        Field(
-            alias="db_username",
-            description="Имя пользователя для подключения к базе данных",
-        ),
-    ]
-    db_password: Annotated[
-        str,
-        Field(
-            default_factory=lambda: generate_password(),
-            alias="db_password",
-            description="Пароль для подключения к базе данных",
-        ),
-    ]
-
-    db_name: Annotated[str, Field(alias="db_name", description="Название базы данных")]
-
-    def get_db_config(self) -> Dict[str, Any]:
-        return {
-            "type": self.db_type,
-            "host": self.db_host,
-            "port": self.db_port,
-            "user": self.db_username,
-            "name": self.db_name,
-            "password": self.db_password,
-        }
-
-
-class JsonConnectionEngine(ConnectionProtocol):
-    """Менеджер для управления соединения
-    игровых правил с хранилищем"""
-
-    def __init__(self, settings: DataBaseConfig) -> None:
-        self._file_path = settings.db_name
-        self._pref = settings.db_host
-
-    def __enter__(self) -> IO:
-        self._resource = open(self._file_path, self._pref)
-        logger.info("json file is open")
-        return self._resource
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._resource is not None:
-            self._resource.close()
-        logger.info("json file is close")
-
-
-class PgConnectionEngine(ConnectionProtocol):
-    """Контекстный менеджер для
-    подключения к postgres"""
-
-    def __init__(self, settings: DataBaseConfig):
-        self._settings = settings
-
-    def __enter__(self):
-        self.connect = connect(
-            make_conninfo("", **self._settings.model_dump()), row_factory=tuple_row
-        )
-        return self.connect
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.connect is not None:
-            self.connect.close()
-
-
-class NotConfig(DataBaseConfig):
-    """Класс конфигурации по умолчанию без сохранения"""
-
-    db_type: str = "not config"
-    db_host: str = "local"
-    db_port: int = 1
-    db_username: str = "neon"
-    db_name: str = "msig"
-    db_password: str = "vbnzq"
-
-
-class JsonConfig(DataBaseConfig):
-    """
-    Тестовые настройки
-    Вы можете построить свою структуру исходя из примера
-    """
-
-    db_type: str = "json"
-    db_host: str = "w+"
-    db_port: int = 1
-    db_username: str = "neon"
-    db_name: str = "game_rules.json"
-    db_password: str = "vbnzq"
-
-
-class PostgresConfig(DataBaseConfig):
-    """
-    Тестовые настройки
-    Вы можете заполнить на свой вкус
-    """
-
-    db_type: str = Field(default="postgresql", alias="type_db")
-    db_host: str = Field(default="localhost", alias="host db")
-    db_port: int = Field(default=5432, alias="port")
-    db_username: str = Field(default="myuser")
-    db_password: str = Field(default="mypassword")
-    db_name: str = Field(default="mydb")
 
 
 class TypeUndefind(Exception): ...

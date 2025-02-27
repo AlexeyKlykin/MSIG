@@ -1,11 +1,10 @@
-from typing import List
-from pytest import fixture, mark
+from typing import List, Tuple
+from pytest import fixture, mark, raises
 
-from game_engine.api import Api
+from game_engine.api import GameRulesApi
+from game_engine.configs import JsonConfig, NotConfig
+from game_engine.connection_protocols import JsonConnectionEngine
 from game_engine.game_rules_infrastructure import (
-    JsonConfig,
-    JsonConnectionEngine,
-    NotConfig,
     PointGameRules,
     GameRulesInterface,
     DictGameRules,
@@ -13,7 +12,7 @@ from game_engine.game_rules_infrastructure import (
 
 
 @fixture(scope="class")
-def setup_struct():
+def config_infrastructure():
     rule_one = PointGameRules(id=1, title="Правило", description="Описание правила 1")
     rule_two = PointGameRules(id=2, title="Правило", description="Описание правила 2")
     rule_thri = PointGameRules(id=3, title="Правило", description="Описание правила 3")
@@ -36,24 +35,24 @@ def setup_struct():
         struct_rule,
     ]
 
-    api = Api()
+    api = GameRulesApi()
     config = JsonConfig()
     api.settings = config
     api.rules = gir.game_rules
 
-    yield gir
+    yield (api, gir)
 
 
-@mark.connect_db_rules()
-class TestApiControllGameRules:
+@mark.api_rules()
+class TestGameRulesApiControll:
     """Тест api для доступа к настройкам и правилам игры"""
 
-    def test_api_json_set_rules(self, setup_struct: GameRulesInterface):
+    def test_api_json_set_rules(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
         """тест: записываем json файл данными"""
 
-        api = Api()
-        api.settings = JsonConfig()
-        api.rules = setup_struct.game_rules
+        api, _ = config_infrastructure
 
         assert api.rules.game_rules == [
             {
@@ -80,13 +79,14 @@ class TestApiControllGameRules:
             },
         ]
 
-    def test_api_json_game_rules_get(self):
-        config = JsonConfig()
-        api = Api()
-        api.settings = config
-        game_rules = api.rules
+    def test_api_json_game_rules_get(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
+        """тест: возврат данных их json"""
 
-        assert game_rules.game_rules == [
+        api, _ = config_infrastructure
+
+        assert api.rules.game_rules == [
             {
                 "description": "Описание правила 1",
                 "id": 1,
@@ -111,16 +111,16 @@ class TestApiControllGameRules:
             },
         ]
 
-    def test_api_not_config_rules_get(self, setup_struct: GameRulesInterface):
+    def test_api_not_config_rules_get(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
         """тест: показ всех данных"""
 
+        api, _ = config_infrastructure
         config = NotConfig()
-        api = Api()
         api.settings = config
-        game_rules = api.rules
-        game_rules.game_rules = setup_struct.game_rules
 
-        assert [item.model_dump() for item in game_rules.game_rules] == [
+        assert api.rules.game_rules == [
             {
                 "description": "Описание правила 1",
                 "id": 1,
@@ -145,15 +145,15 @@ class TestApiControllGameRules:
             },
         ]
 
-    def test_api_get_by_idx(self, setup_struct: GameRulesInterface):
+    def test_api_get_by_idx(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
         """тест: возврат значения по индексу"""
 
-        api = Api()
-        api.settings = JsonConfig()
-        api.rules = setup_struct.game_rules
+        api, _ = config_infrastructure
         rules_one = api.get_by_idx(0)
 
-        assert rules_one.model_dump() == {
+        assert rules_one == {
             "description": "Описание правила 1",
             "id": 1,
             "sub_point_list": [
@@ -176,7 +176,9 @@ class TestApiControllGameRules:
             "title": "1. Правило 1",
         }
 
-    def test_api_set_by_idx(self, setup_struct: GameRulesInterface):
+    def test_api_set_by_idx(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
         """тест: добавляем правило по индексу"""
 
         rule_one = PointGameRules(
@@ -202,9 +204,7 @@ class TestApiControllGameRules:
             sub_point_list=sub_point_list,
         )
 
-        api = Api()
-        api.settings = JsonConfig()
-        api.rules = setup_struct.game_rules
+        api, _ = config_infrastructure
         api.set_by_idx(1, struct_rule)
         item = api.get_by_idx(1)
 
@@ -231,37 +231,90 @@ class TestApiControllGameRules:
             "title": "2. Правило 2",
         }
 
-    def test_api_get_sub_point_by_idx(self, setup_struct: GameRulesInterface):
+    def test_api_delete_by_idx(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
+        """тест: удаление правила по индексу"""
+
+        api, _ = config_infrastructure
+        first_el = api.get_by_idx(0)
+        api.delete_by_idx(0)
+
+        assert api.get_by_idx(0) != first_el
+
+    def test_raise_idx(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
+        """тест: ошибка индекса при попытке доступа к несуществующему правилу"""
+
+        api, _ = config_infrastructure
+        api = GameRulesApi()
+
+        with raises(IndexError):
+            api.get_by_idx(1)
+
+    def test_api_get_subpoint_by_idx(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
         """получение субправила по индексу"""
 
-        settings = JsonConfig()
-        api = Api()
-        api.rules = setup_struct.game_rules
-        api.settings = settings
+        api, _ = config_infrastructure
 
-        assert api.get_subpoint_by_idx((1, 1)) == {}
+        assert api.get_subpoint_by_idx((0, 1)).model_dump() == {
+            "description": "Описание правила 2",
+            "id": 2,
+            "title": "2.2. Правило",
+        }
 
-    def test_api_set_sub_point_by_idx(self, setup_struct: GameRulesInterface):
+    def test_api_set_subpoint_by_idx(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
         """записть субправила"""
 
-        value = PointGameRules(id=1, title="Правило", description="Описание правила 1")
-        settings = JsonConfig()
-        api = Api()
-        api.rules = setup_struct.game_rules
-        api.settings = settings
-        api.set_subpoint_by_idx((1, 1), value)
+        api, _ = config_infrastructure
+        value = PointGameRules(id=4, title="Правило", description="Описание правила 4")
+        api.set_subpoint_by_idx((0, 1), value)
 
-        assert api.get_subpoint_by_idx((1, 1)) == {}
+        assert api.get_subpoint_by_idx((0, 1)).model_dump() == {
+            "description": "Описание правила 4",
+            "id": 4,
+            "title": "Правило",
+        }
+
+    def test_api_delete_subpoint_by_idx(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
+        """тест: удаление подправила по индексу"""
+
+        api, _ = config_infrastructure
+        first_el = api.get_subpoint_by_idx((0, 0))
+        api.delete_subpoint_by_idx((0, 0))
+
+        assert api.get_subpoint_by_idx((0, 0)) != first_el
+
+    def test_raise_subpoint_idx(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
+        """тест: ошибка индексу при попытке доступа к несуществующему подправилу"""
+
+        api, _ = config_infrastructure
+
+        with raises(IndexError):
+            api.get_subpoint_by_idx((1, 1))
 
 
 @mark.connect_db_rules()
 class TestConnectDatabase:
     """Тест должен проверять соединение с бд"""
 
-    def test_connect_json_set(self, setup_struct):
+    def test_connect_json_set(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
         """тест: добавление в json"""
 
+        _, setup_struct = config_infrastructure
         config_json: JsonConfig = JsonConfig(db_name="config.json", db_host="w")
+
         with JsonConnectionEngine(config_json) as conn:
             conn.write(setup_struct.game_rules[0].model_dump_json())
 
@@ -281,12 +334,16 @@ class TestConnectDatabase:
             ]
 
 
-@mark.infrastructure_rules()
+@mark.interface_rules()
 class TestInterfaceGameRules:
     """Тест интерфейса игровых правил"""
 
-    def test_interface_get_data_list(self, setup_struct):
+    def test_interface_get_data_list(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
         """тест: менеджер контекста открытие и закрытие"""
+
+        _, setup_struct = config_infrastructure
 
         assert [item.model_dump() for item in setup_struct.game_rules] == [
             {
@@ -313,37 +370,39 @@ class TestInterfaceGameRules:
             },
         ]
 
-    def test_interface_get_data_dict(self, setup_struct):
+    def test_interface_get_data_dict(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
         """тест: менеджер контекста сохранения данных"""
 
-        assert [
-            item.model_dump() for item in setup_struct.game_rules if item.id == 1
-        ] == [
-            {
-                "description": "Описание правила 1",
-                "id": 1,
-                "sub_point_list": [
-                    {
-                        "description": "Описание правила 1",
-                        "id": 1,
-                        "title": "1.1. Правило",
-                    },
-                    {
-                        "description": "Описание правила 2",
-                        "id": 2,
-                        "title": "1.2. Правило",
-                    },
-                    {
-                        "description": "Описание правила 3",
-                        "id": 3,
-                        "title": "1.3. Правило",
-                    },
-                ],
-                "title": "1. Правило 1",
-            },
-        ]
+        _, setup_struct = config_infrastructure
 
-    def test_interface_set_data_in_list(self, setup_struct):
+        assert setup_struct.game_rules[0].model_dump() == {
+            "description": "Описание правила 1",
+            "id": 1,
+            "sub_point_list": [
+                {
+                    "description": "Описание правила 1",
+                    "id": 1,
+                    "title": "1.1. Правило",
+                },
+                {
+                    "description": "Описание правила 2",
+                    "id": 2,
+                    "title": "1.2. Правило",
+                },
+                {
+                    "description": "Описание правила 3",
+                    "id": 3,
+                    "title": "1.3. Правило",
+                },
+            ],
+            "title": "1. Правило 1",
+        }
+
+    def test_interface_set_data_in_list(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
         """тест: добавление к правилам"""
 
         rule_one = PointGameRules(
@@ -368,6 +427,8 @@ class TestInterfaceGameRules:
             description="Описание правила 2",
             sub_point_list=sub_point_list,
         )
+
+        _, setup_struct = config_infrastructure
 
         lst: List[DictGameRules] = setup_struct.game_rules
         lst.append(struct_rule)
