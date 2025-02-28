@@ -82,7 +82,7 @@ class GameRulesInterface:
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> DictGameRules:
         if self.idx < len(self._game_rules):
             res = self._game_rules[self.idx]
             self.idx += 1
@@ -90,17 +90,17 @@ class GameRulesInterface:
         else:
             raise StopIteration
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> DictGameRules:
         if 0 < len(self._game_rules) and index >= 0:
             return self._game_rules[index]
         else:
             raise IndexError("Индекс выходит за пределы допустимого значения")
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: int, value: DictGameRules):
         if isinstance(key, int) or key >= 0:
             self._game_rules[key] = value
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: int):
         if isinstance(key, int):
             del self._game_rules[key]
 
