@@ -5,13 +5,12 @@
 """
 
 import logging
-from typing import List
+from typing import List, Annotated
 from pydantic import (
     BaseModel,
     Field,
     model_validator,
 )
-from typing_extensions import Annotated
 
 
 logging.basicConfig(
@@ -40,6 +39,7 @@ class PointGameRules(BaseModel):
 class DictGameRules(PointGameRules):
     """
     Класс структуры заголовочных пунктов правил
+    -------------------------------------------
     id generated always as identity int
     title Правило 1
     description Описание правила 1
@@ -48,7 +48,10 @@ class DictGameRules(PointGameRules):
 
     sub_point_list: Annotated[
         List[PointGameRules],
-        Field(default=[], description="Список правил под заголовком"),
+        Field(
+            default_factory=List[PointGameRules],
+            description="Список правил под заголовком",
+        ),
     ]
 
     @model_validator(mode="after")
@@ -73,7 +76,33 @@ class GameRulesInterface:
     """Интерфейс взаимодействия с json"""
 
     def __init__(self) -> None:
-        self._game_rules = []
+        self._game_rules: List[DictGameRules] = []
+        self.idx: int = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.idx < len(self._game_rules):
+            res = self._game_rules[self.idx]
+            self.idx += 1
+            return res
+        else:
+            raise StopIteration
+
+    def __getitem__(self, index):
+        if 0 < len(self._game_rules) and index >= 0:
+            return self._game_rules[index]
+        else:
+            raise IndexError("Индекс выходит за пределы допустимого значения")
+
+    def __setitem__(self, key, value):
+        if isinstance(key, int) or key >= 0:
+            self._game_rules[key] = value
+
+    def __delitem__(self, key):
+        if isinstance(key, int):
+            del self._game_rules[key]
 
     @property
     def game_rules(self) -> List[DictGameRules]:

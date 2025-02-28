@@ -12,4 +12,6 @@ src/msig
 src/config.json
 src/game_rules.db
 src/game_rules.json
+game_rules.json
 config.json
+road_map.md

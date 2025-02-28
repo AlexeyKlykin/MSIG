@@ -1,3 +1,8 @@
+"""
+Как только будут новые протоколы доступа к базе данных
+нужно их обработать в api
+"""
+
 import logging
 from typing import List, Tuple
 
@@ -37,6 +42,13 @@ class GameRulesApi:
         self._game_rules = GameRulesInterface()
         self._settings: DataBaseConfig = NotConfig()
 
+    @staticmethod
+    def game_rules_sorted(collect: List[DictGameRules]) -> List[DictGameRules]:
+        sort_lst = collect.sort(key=lambda x: x.id)
+        if sort_lst is None:
+            raise TypeUndefind("После сортировки возвращается None")
+        return sort_lst
+
     @property
     def settings(self) -> DataBaseConfig:
         """возвращаем настройки"""
@@ -63,7 +75,7 @@ class GameRulesApi:
 
     @property
     def rules(self) -> GameRulesInterface:
-        """метод для публикации всех данных"""
+        """метод для загрузки правил из баз данных"""
 
         if isinstance(self._settings, DataBaseConfig):
             match self.settings.db_type:
@@ -83,7 +95,8 @@ class GameRulesApi:
 
                 case _:
                     logger.warning(
-                        "Упала при попытке вывести правила. Неизвестный тип переданный json get в api"
+                        """Метод api.rules упал при попытке вывести правила. 
+                        Неизвестный тип переданный json get в api"""
                     )
                     raise TypeUndefind("Неизвестный тип")
         else:
@@ -107,7 +120,7 @@ class GameRulesApi:
                             self._game_rules.game_rules = values
 
                         json.dump(
-                            [item.model_dump() for item in self._game_rules.game_rules],
+                            [item.model_dump() for item in self._game_rules],
                             sort_keys=True,
                             fp=conn,
                         )
@@ -124,19 +137,21 @@ class GameRulesApi:
 
         try:
             logger.info("успешно исполнен  Api.get_by_idx")
-            return self._game_rules.game_rules[idx]
+            return self._game_rules[idx]
 
         except IndexError:
-            raise IndexError(f"{idx} не существует в правилах")
+            raise IndexError(
+                f"Элемента с таким индексом = {idx} не существует в правилах"
+            )
 
     def set_by_idx(self, idx: int, value: DictGameRules):
         """вставка правил по индексу"""
 
         try:
             if isinstance(value, DictGameRules):
-                if self._game_rules.game_rules[idx] != value:
+                if self._game_rules[idx] != value:
                     logger.warning(f"успешно записан {value} в Api.get_by_idx")
-                    self._game_rules.game_rules[idx] = value
+                    self._game_rules[idx] = value
 
         except IndexError:
             logger.warning(
@@ -168,7 +183,7 @@ class GameRulesApi:
 
         try:
             logger.info(f"получено правило по индексам {indexes}")
-            return self._game_rules.game_rules[idx].sub_point_list[subidx]
+            return self._game_rules[idx].sub_point_list[subidx]
 
         except IndexError as err:
             logger.warning(f"Ошибка индекса по адресам {indexes}")
@@ -181,13 +196,15 @@ class GameRulesApi:
 
         try:
             if isinstance(value, PointGameRules):
-                self._game_rules.game_rules[idx].sub_point_list[subidx] = value
+                self._game_rules[idx].sub_point_list[subidx] = value
 
-        except IndexError as err:
-            logger.warning(
-                f"Ошибка объявления элемента {value} по индексам {indexes}. {err}"
-            )
-            self._game_rules.game_rules[idx].sub_point_list.append(value)
+        except IndexError:
+            logger.warning(f"Ошибка объявления элемента {value} по индексам {indexes}")
+            self._game_rules[idx].sub_point_list.append(value)
+
+        except TypeError:
+            logger.warning(f"Неизвестный тип {value}")
+            raise TypeError("Неизвестный тип value")
 
     def delete_subpoint_by_idx(self, indexes: Tuple[int, int]):
         """метод удаления подправила по индексу"""
@@ -195,7 +212,7 @@ class GameRulesApi:
         idx, subidx = indexes
 
         try:
-            del_el = self._game_rules.game_rules[idx].sub_point_list.pop(subidx)
+            del_el = self._game_rules[idx].sub_point_list.pop(subidx)
             logger.info(f"выполнено удаление {del_el}")
 
         except IndexError:

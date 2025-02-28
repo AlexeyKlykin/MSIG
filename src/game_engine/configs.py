@@ -1,6 +1,6 @@
 import secrets
 import string
-from typing import Annotated, Any, Dict
+from typing import Any, Dict, Annotated
 from pydantic import Field
 from pydantic_settings import BaseSettings
 

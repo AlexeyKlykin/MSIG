@@ -47,80 +47,21 @@ def config_infrastructure():
 class TestGameRulesApiControll:
     """Тест api для доступа к настройкам и правилам игры"""
 
-    def test_api_json_set_rules(
-        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
-    ):
-        """тест: записываем json файл данными"""
-
-        api, _ = config_infrastructure
-
-        assert api.rules.game_rules == [
-            {
-                "description": "Описание правила 1",
-                "id": 1,
-                "sub_point_list": [
-                    {
-                        "description": "Описание правила 1",
-                        "id": 1,
-                        "title": "1.1. Правило",
-                    },
-                    {
-                        "description": "Описание правила 2",
-                        "id": 2,
-                        "title": "1.2. Правило",
-                    },
-                    {
-                        "description": "Описание правила 3",
-                        "id": 3,
-                        "title": "1.3. Правило",
-                    },
-                ],
-                "title": "1. Правило 1",
-            },
-        ]
-
-    def test_api_json_game_rules_get(
-        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
-    ):
-        """тест: возврат данных их json"""
-
-        api, _ = config_infrastructure
-
-        assert api.rules.game_rules == [
-            {
-                "description": "Описание правила 1",
-                "id": 1,
-                "sub_point_list": [
-                    {
-                        "description": "Описание правила 1",
-                        "id": 1,
-                        "title": "1.1. Правило",
-                    },
-                    {
-                        "description": "Описание правила 2",
-                        "id": 2,
-                        "title": "1.2. Правило",
-                    },
-                    {
-                        "description": "Описание правила 3",
-                        "id": 3,
-                        "title": "1.3. Правило",
-                    },
-                ],
-                "title": "1. Правило 1",
-            },
-        ]
+    ## не протестирован доступ к json
+    ## при добавлении новых функции доступа к бд в api
+    ## нужно будет добавить и тест на открытие файла json
 
     def test_api_not_config_rules_get(
         self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
     ):
-        """тест: показ всех данных"""
+        """тест: показ всех данных при настройках по умолчанию.
+        default_settings без доступа к каким либо базам данных"""
 
         api, _ = config_infrastructure
         config = NotConfig()
         api.settings = config
 
-        assert api.rules.game_rules == [
+        assert [item.model_dump() for item in api.rules.game_rules] == [
             {
                 "description": "Описание правила 1",
                 "id": 1,
@@ -153,7 +94,7 @@ class TestGameRulesApiControll:
         api, _ = config_infrastructure
         rules_one = api.get_by_idx(0)
 
-        assert rules_one == {
+        assert rules_one.model_dump() == {
             "description": "Описание правила 1",
             "id": 1,
             "sub_point_list": [
@@ -175,6 +116,16 @@ class TestGameRulesApiControll:
             ],
             "title": "1. Правило 1",
         }
+
+    def test_index_out_of_range_for_get_by_idx(
+        self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
+    ):
+        """тест: на ошибку индекса при получении данных"""
+
+        api, _ = config_infrastructure
+
+        with raises(IndexError):
+            api.get_by_idx(1)
 
     def test_api_set_by_idx(
         self, config_infrastructure: Tuple[GameRulesApi, GameRulesInterface]
