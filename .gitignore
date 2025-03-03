@@ -16,3 +16,4 @@ config.json
 game_rules.json
 src/game_engine/game_elements/__pycache__/*
 src/game_engine/game_elements/__pycache__
+.pyc

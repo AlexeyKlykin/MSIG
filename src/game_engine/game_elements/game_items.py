@@ -13,41 +13,25 @@ from typing import Generic, List, Annotated, Tuple, TypeVar
 from pydantic import BaseModel, Field
 
 
-T = TypeVar("T", bound=BaseModel)
+class GameItemMixin(BaseModel):
+    """Миксин для id, title, description"""
+
+    id: Annotated[int, Field(default=0, description="Идентификатор")]
+    title: Annotated[str, Field(..., description="Название")]
+    description: Annotated[str, Field(..., description="Описание")]
 
 
-class GameItemClass(BaseModel):
+class GameItemClass(GameItemMixin):
     """Класс предметов игры"""
 
-    class_item_id: Annotated[
-        int, Field(default=0, description="Идентификатор класса предмета")
-    ]
-    class_item_title: Annotated[str, Field(..., description="Название класса предмета")]
-    class_item_description: Annotated[
-        str, Field(..., description="Описание класса предмета")
-    ]
 
-
-class GameItemType(BaseModel):
+class GameItemType(GameItemMixin):
     """Тип предметов игры"""
 
-    type_item_id: Annotated[
-        int, Field(default=0, description="Идентификатор типа предмета")
-    ]
-    type_item_title: Annotated[str, Field(..., description="Название типа предмета")]
-    type_item_description: Annotated[
-        str, Field(..., description="Описание типа предмета")
-    ]
 
-
-class GameItemOption(BaseModel):
+class GameItemOption(GameItemMixin):
     """Опции предмета игры"""
 
-    item_option_id: Annotated[
-        int, Field(default=0, description="Идентификатор опции предмета")
-    ]
-    item_option_title: Annotated[str, Field(..., description="Название опции")]
-    item_option_description: Annotated[str, Field(..., description="Описание опции")]
     range_of_numeric_values: Annotated[
         Tuple[int, int], Field(..., description="Числовой диапазон от min до max")
     ]
@@ -77,11 +61,9 @@ class GameItemParametr(BaseModel):
     ]
 
 
-class GameItem(BaseModel):
+class GameItem(GameItemMixin):
     """Класс предмета игры"""
 
-    item_id: Annotated[int, Field(gt=0, description="id предмета")]
-    item_title: Annotated[str, Field(max_length=300, description="название предмета")]
     item_class: Annotated[GameItemClass, Field(..., description="класс предмета")]
     item_type: Annotated[GameItemType, Field(..., description="тип предмета")]
     item_parametrs: Annotated[
@@ -93,27 +75,3 @@ class GameItem(BaseModel):
             default_factory=List[GameItemOption], description="Список опций предмета"
         ),
     ]
-    item_description: Annotated[str, Field(..., description="описание предмета")]
-
-
-class GameItemInterface(Generic[T]):
-    """Интерфейс доступа к предметам"""
-
-    def __init__(self) -> None:
-        self._item = None
-
-    @property
-    def item(self) -> T:
-        """Возвращаем предмет"""
-
-        if self._item is None:
-            raise TypeError("Item is None")
-
-        return self._item
-
-    @item.setter
-    def item(self, value: T):
-        """Записывает предмет"""
-
-        if isinstance(value, BaseModel):
-            self._item = value

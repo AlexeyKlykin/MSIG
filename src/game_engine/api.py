@@ -1,23 +1,41 @@
 import logging
 from typing import List, Tuple
-
 import json
+
 from game_engine.configs import DataBaseConfig, NotConfig
 from game_engine.connection_protocols import JsonConnectionEngine
 from game_engine.game_rules_infrastructure import (
     DictGameRules,
     GameRulesInterface,
     PointGameRules,
-    TypeUndefind,
+)
+from game_engine.game_elements.game_items import (
+    GameItem,
+    GameItemClass,
+    GameItemOption,
+    GameItemParametr,
+    GameItemType,
 )
 
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
+
+
+class UndefindTypeError(Exception):
+    """Ошибка неверного типа структуры предмета"""
+
+    def __init__(self, item_type: str, item) -> None:
+        super().__init__(item_type)
+        self.item_type = item_type
+        self.item = item
+
+    def __str__(self) -> str:
+        return f"{self.item_type} ошибка структуры типа {self.item}"
 
 
 class GameRulesApi:
@@ -27,10 +45,16 @@ class GameRulesApi:
     -------------------------------------------
     settings = JsonConfig()
     api = GameRulesApi()
-    api.settings = settings
-    api.settings # Pydantic class()
-    api.rules # call rules
-    api.rules = rules # set rules
+    settings = settings
+    settings # Pydantic class()
+    rules # call rules
+    rules = rules # set rules
+    get_by_idx
+    set_by_idx
+    delete_by_idx
+    get_subpoint_by_idx
+    set_subpoint_by_idx
+    delete_subpoint_by_idx
     """
 
     def __init__(self) -> None:
@@ -45,7 +69,7 @@ class GameRulesApi:
             return self._settings
 
         else:
-            raise TypeUndefind(
+            raise TypeError(
                 "self._settings is None. Нужно задать настройки перед вызовом правил"
             )
 
@@ -78,7 +102,7 @@ class GameRulesApi:
                     return self._game_rules
 
                 case _:
-                    raise TypeUndefind(
+                    raise TypeError(
                         """Упала при попытке вывести правила. 
                         Неизвестный тип переданный json get в api"""
                     )
@@ -110,7 +134,7 @@ class GameRulesApi:
                     logger.info("Игровые правила записаны из json в api")
 
                 case _:
-                    raise TypeUndefind(
+                    raise TypeError(
                         """Ошибка падает при попытке добавить данные. 
                         json set Ошибка сериализации"""
                     )
@@ -195,3 +219,84 @@ class GameRulesApi:
             raise IndexError(
                 f"Ошибка. {indexes} недопустимый индекс правила или подправила"
             )
+
+
+class GameItemApi:
+    """
+    Класс для публичного доступа к интерфейсу структуры предметов
+    -------------------------------------------------------------
+    """
+
+    def __init__(self) -> None:
+        self._item_class: GameItemClass | None = None
+        self._item_type: GameItemType | None = None
+        self._item_option: GameItemOption | None = None
+        self._item_parametr: GameItemParametr | None = None
+        self._game_item: GameItem | None = None
+
+    @property
+    def item_class(self) -> GameItemClass:
+        if isinstance(self._item_class, GameItemClass):
+            logger.info("Создан клас предмета")
+            return self._item_class
+        else:
+            raise UndefindTypeError(item_type="GameItemClass", item=self._item_class)
+
+    @item_class.setter
+    def item_class(self, value: GameItemClass):
+        if isinstance(value, GameItemClass):
+            self._item_class = value
+
+    @property
+    def item_type(self) -> GameItemType:
+        if isinstance(self._item_type, GameItemType):
+            logger.info("Создан тип предмета")
+            return self._item_type
+        else:
+            raise UndefindTypeError(item_type="GameItemType", item=self._item_type)
+
+    @item_type.setter
+    def item_type(self, value: GameItemType):
+        if isinstance(value, GameItemType):
+            self._item_type = value
+
+    @property
+    def item_option(self) -> GameItemOption:
+        if isinstance(self._item_option, GameItemOption):
+            logger.info("Создана опция предмета")
+            return self._item_option
+        else:
+            raise UndefindTypeError(item_type="GameItemOption", item=self._item_option)
+
+    @item_option.setter
+    def item_option(self, value: GameItemOption):
+        if isinstance(value, GameItemOption):
+            self._item_option = value
+
+    @property
+    def item_parametr(self) -> GameItemParametr:
+        if isinstance(self._item_parametr, GameItemParametr):
+            logger.info("Создан параметр предмета")
+            return self._item_parametr
+        else:
+            raise UndefindTypeError(
+                item_type="GameItemParametr", item=self._item_parametr
+            )
+
+    @item_parametr.setter
+    def item_parametr(self, value: GameItemParametr):
+        if isinstance(value, GameItemParametr):
+            self._item_parametr = value
+
+    @property
+    def game_item(self) -> GameItem:
+        if isinstance(self._game_item, GameItem):
+            logger.info("Создан предмет с набором параметров и атрибутов")
+            return self._game_item
+        else:
+            raise UndefindTypeError(item_type="GameItem", item=self._game_item)
+
+    @game_item.setter
+    def game_item(self, value: GameItem):
+        if isinstance(value, GameItem):
+            self._game_item = value
