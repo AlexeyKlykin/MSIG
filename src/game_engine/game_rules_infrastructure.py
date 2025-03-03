@@ -65,9 +65,6 @@ class DictGameRules(PointGameRules):
         return self
 
 
-class TypeUndefind(Exception): ...
-
-
 class GameRulesInterface:
     """Интерфейс взаимодействия с json"""
 
