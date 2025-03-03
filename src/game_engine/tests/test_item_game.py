@@ -145,9 +145,3 @@ class TestItemsGame:
                 "title": "Огнестрельное",
             },
         }
-
-
-class TestBuildItemGame:
-    """Тест сборки предмета игры"""
-
-    pass

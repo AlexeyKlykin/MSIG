@@ -9,7 +9,7 @@
 Интерфейс доступа к предмету
 """
 
-from typing import Generic, List, Annotated, Tuple, TypeVar
+from typing import List, Annotated, Tuple
 from pydantic import BaseModel, Field
 
 
