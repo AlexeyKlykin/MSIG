@@ -1,17 +1,16 @@
 """
 Правила игры формируются в виде пронумерованых списков
 структура состоит из номера, названия и описания
-Интерфейс позволяет добавлять правила
+Интерфейс позволяет добавлять правила и возвращать
 """
 
 import logging
-from typing import List
+from typing import List, Annotated
 from pydantic import (
     BaseModel,
     Field,
     model_validator,
 )
-from typing_extensions import Annotated
 
 
 logging.basicConfig(

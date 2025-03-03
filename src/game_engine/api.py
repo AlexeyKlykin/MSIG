@@ -45,10 +45,6 @@ class GameRulesApi:
             return self._settings
 
         else:
-            logger.warning(
-                """self._settings is None. 
-                Нужно добавить settings перед тем как производить операции с правилами"""
-            )
             raise TypeUndefind(
                 "self._settings is None. Нужно задать настройки перед вызовом правил"
             )
@@ -68,7 +64,7 @@ class GameRulesApi:
         if isinstance(self._settings, DataBaseConfig):
             match self.settings.db_type:
                 case "not config":
-                    logger.info("Игровые правила готовы")
+                    logger.info("NotConfig. Игровые правила готовы")
                     return self._game_rules
 
                 case "json":
@@ -78,14 +74,14 @@ class GameRulesApi:
                         if conn is not None:
                             self._game_rules.game_rules = json.load(conn)
 
-                    logger.info("Игровые правила готовы в api")
+                    logger.info("Игровые правила готовы в api через json")
                     return self._game_rules
 
                 case _:
-                    logger.warning(
-                        "Упала при попытке вывести правила. Неизвестный тип переданный json get в api"
+                    raise TypeUndefind(
+                        """Упала при попытке вывести правила. 
+                        Неизвестный тип переданный json get в api"""
                     )
-                    raise TypeUndefind("Неизвестный тип")
         else:
             raise TypeError("Тип settings None")
 
@@ -114,10 +110,10 @@ class GameRulesApi:
                     logger.info("Игровые правила записаны из json в api")
 
                 case _:
-                    logger.warning(
-                        "Ошибка падает при попытке добавить данные. json set Ошибка сериализации"
+                    raise TypeUndefind(
+                        """Ошибка падает при попытке добавить данные. 
+                        json set Ошибка сериализации"""
                     )
-                    raise TypeUndefind("Неизвестный тип")
 
     def get_by_idx(self, idx: int) -> DictGameRules:
         """возврат правил по индексу"""
@@ -147,8 +143,7 @@ class GameRulesApi:
             self._game_rules._game_rules.append(value)
 
         except TypeError:
-            logger.warning(f"Неизвестный тип {value}")
-            raise TypeError("Неизвестный тип value")
+            raise TypeError(f"Неизвестный тип {value}")
 
     def delete_by_idx(self, idx: int):
         """метод для удаления правила по индексу"""
@@ -158,7 +153,6 @@ class GameRulesApi:
             logger.info(f"выполнено удаление {del_el}")
 
         except IndexError:
-            logger.warning("Ошибка. Недопустимый индекс элемента")
             raise IndexError(f"Ошибка. {idx} недопустимый индекс элемента")
 
     def get_subpoint_by_idx(self, indexes: Tuple[int, int]) -> PointGameRules:
@@ -171,7 +165,6 @@ class GameRulesApi:
             return self._game_rules.game_rules[idx].sub_point_list[subidx]
 
         except IndexError as err:
-            logger.warning(f"Ошибка индекса по адресам {indexes}")
             raise IndexError(f"Ошибка индекса {err}")
 
     def set_subpoint_by_idx(self, indexes: Tuple[int, int], value: PointGameRules):
@@ -199,7 +192,6 @@ class GameRulesApi:
             logger.info(f"выполнено удаление {del_el}")
 
         except IndexError:
-            logger.warning("Ошибка. Недопустимый индекс элемента")
             raise IndexError(
                 f"Ошибка. {indexes} недопустимый индекс правила или подправила"
             )

@@ -21,4 +21,5 @@ markers = [
     "interface_rules",
     "connect_db_rules",
     "api_rules",
+    "items_game",
 ]
