@@ -2,6 +2,8 @@ import logging
 from typing import List, Tuple
 import json
 
+from pydantic import BaseModel
+
 from game_engine.configs import DataBaseConfig, NotConfig
 from game_engine.connection_protocols import JsonConnectionEngine
 from game_engine.game_rules_infrastructure import (
@@ -9,13 +11,7 @@ from game_engine.game_rules_infrastructure import (
     GameRulesInterface,
     PointGameRules,
 )
-from game_engine.game_elements.game_items import (
-    GameItem,
-    GameItemClass,
-    GameItemOption,
-    GameItemParametr,
-    GameItemType,
-)
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -38,13 +34,13 @@ class UndefindTypeError(Exception):
         return f"{self.item_type} ошибка структуры типа {self.item}"
 
 
-class GameRulesApi:
+class GameRulesController:
     """
     Класс контроллер обработки данных из
     разных источников на примере игровых правил
     -------------------------------------------
     settings = JsonConfig()
-    api = GameRulesApi()
+    controller = GameRulesController()
     settings = settings
     settings # Pydantic class()
     rules # call rules
@@ -98,13 +94,13 @@ class GameRulesApi:
                         if conn is not None:
                             self._game_rules.game_rules = json.load(conn)
 
-                    logger.info("Игровые правила готовы в api через json")
+                    logger.info("Игровые правила готовы в controller через json")
                     return self._game_rules
 
                 case _:
                     raise TypeError(
                         """Упала при попытке вывести правила. 
-                        Неизвестный тип переданный json get в api"""
+                        Неизвестный тип переданный json get в controller"""
                     )
         else:
             raise TypeError("Тип settings None")
@@ -117,7 +113,7 @@ class GameRulesApi:
             match self.settings.db_type:
                 case "not config":
                     self._game_rules.game_rules = values
-                    logger.info("Игровые правила записаны из not config в api")
+                    logger.info("Игровые правила записаны из not config в controller")
 
                 case "json":
                     self.settings.db_host = "w"
@@ -131,7 +127,7 @@ class GameRulesApi:
                             sort_keys=True,
                             fp=conn,
                         )
-                    logger.info("Игровые правила записаны из json в api")
+                    logger.info("Игровые правила записаны из json в controller")
 
                 case _:
                     raise TypeError(
@@ -143,7 +139,7 @@ class GameRulesApi:
         """возврат правил по индексу"""
 
         try:
-            logger.info("успешно исполнен  Api.get_by_idx")
+            logger.info("успешно исполнен  controller.get_by_idx")
             return self._game_rules.game_rules[idx]
 
         except IndexError:
@@ -155,7 +151,7 @@ class GameRulesApi:
         try:
             if isinstance(value, DictGameRules):
                 if self._game_rules.game_rules[idx] != value:
-                    logger.warning(f"успешно записан {value} в Api.get_by_idx")
+                    logger.warning(f"успешно записан {value} в Controller.get_by_idx")
                     self._game_rules.game_rules[idx] = value
 
         except IndexError:
@@ -221,82 +217,29 @@ class GameRulesApi:
             )
 
 
-class GameItemApi:
+class Descriptor:
+    def __set_name__(self, owner, name):
+        self._name = name
+
+    def __get__(self, instance, owner):
+        if isinstance(instance.__dict__[self._name], BaseModel):
+            return instance.__dict__[self._name]
+        else:
+            raise UndefindTypeError(item_type="BaseModel", item=self._name)
+
+    def __set__(self, instance, value):
+        if isinstance(value, BaseModel):
+            instance.__dict__[self._name] = value
+
+
+class GameItemController:
     """
     Класс для публичного доступа к интерфейсу структуры предметов
     -------------------------------------------------------------
     """
 
-    def __init__(self) -> None:
-        self._item_class: GameItemClass | None = None
-        self._item_type: GameItemType | None = None
-        self._item_option: GameItemOption | None = None
-        self._item_parametr: GameItemParametr | None = None
-        self._game_item: GameItem | None = None
-
-    @property
-    def item_class(self) -> GameItemClass:
-        if isinstance(self._item_class, GameItemClass):
-            logger.info("Создан клас предмета")
-            return self._item_class
-        else:
-            raise UndefindTypeError(item_type="GameItemClass", item=self._item_class)
-
-    @item_class.setter
-    def item_class(self, value: GameItemClass):
-        if isinstance(value, GameItemClass):
-            self._item_class = value
-
-    @property
-    def item_type(self) -> GameItemType:
-        if isinstance(self._item_type, GameItemType):
-            logger.info("Создан тип предмета")
-            return self._item_type
-        else:
-            raise UndefindTypeError(item_type="GameItemType", item=self._item_type)
-
-    @item_type.setter
-    def item_type(self, value: GameItemType):
-        if isinstance(value, GameItemType):
-            self._item_type = value
-
-    @property
-    def item_option(self) -> GameItemOption:
-        if isinstance(self._item_option, GameItemOption):
-            logger.info("Создана опция предмета")
-            return self._item_option
-        else:
-            raise UndefindTypeError(item_type="GameItemOption", item=self._item_option)
-
-    @item_option.setter
-    def item_option(self, value: GameItemOption):
-        if isinstance(value, GameItemOption):
-            self._item_option = value
-
-    @property
-    def item_parametr(self) -> GameItemParametr:
-        if isinstance(self._item_parametr, GameItemParametr):
-            logger.info("Создан параметр предмета")
-            return self._item_parametr
-        else:
-            raise UndefindTypeError(
-                item_type="GameItemParametr", item=self._item_parametr
-            )
-
-    @item_parametr.setter
-    def item_parametr(self, value: GameItemParametr):
-        if isinstance(value, GameItemParametr):
-            self._item_parametr = value
-
-    @property
-    def game_item(self) -> GameItem:
-        if isinstance(self._game_item, GameItem):
-            logger.info("Создан предмет с набором параметров и атрибутов")
-            return self._game_item
-        else:
-            raise UndefindTypeError(item_type="GameItem", item=self._game_item)
-
-    @game_item.setter
-    def game_item(self, value: GameItem):
-        if isinstance(value, GameItem):
-            self._game_item = value
+    item_class = Descriptor()
+    item_type = Descriptor()
+    item_option = Descriptor()
+    item_parametr = Descriptor()
+    game_item = Descriptor()

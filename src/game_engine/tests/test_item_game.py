@@ -1,5 +1,5 @@
 from pytest import fixture, mark
-from game_engine.api import GameItemApi
+from game_engine.controllers import GameItemController
 from game_engine.game_elements.game_items import (
     GameItem,
     GameItemClass,
@@ -59,14 +59,14 @@ def setup_items_config():
         }
     )
 
-    api = GameItemApi()
-    api.item_class = item_class
-    api.item_type = item_type
-    api.item_parametr = item_parametr
-    api.item_option = item_option
-    api.game_item = item
+    controller = GameItemController()
+    controller.item_class = item_class
+    controller.item_type = item_type
+    controller.item_parametr = item_parametr
+    controller.item_option = item_option
+    controller.game_item = item
 
-    yield api
+    yield controller
 
 
 @mark.items_game()
