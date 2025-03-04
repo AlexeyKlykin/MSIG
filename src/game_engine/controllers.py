@@ -63,7 +63,6 @@ class GameRulesController:
 
         if isinstance(self._settings, DataBaseConfig):
             return self._settings
-
         else:
             raise TypeError(
                 "self._settings is None. Нужно задать настройки перед вызовом правил"
