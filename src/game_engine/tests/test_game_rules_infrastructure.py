@@ -154,7 +154,7 @@ class TestGameRulesControler:
         controller, _ = config_infrastructure
         rules_one = controller.get_by_idx(0)
 
-        assert rules_one.model_dump() == {
+        assert rules_one == {
             "description": "Описание правила 1",
             "id": 1,
             "sub_point_list": [

@@ -66,7 +66,9 @@ class GameRulesController:
     def game_rules_sorted(collect: List[DictGameRules]) -> List[DictGameRules]:
         sort_lst = collect.sort(key=lambda x: x.id)
         if sort_lst is None:
-            raise TypeUndefind("После сортировки возвращается None")
+            raise UndefindTypeError(
+                item="После сортировки возвращается None", item_type="None"
+            )
         return sort_lst
 
     @property
