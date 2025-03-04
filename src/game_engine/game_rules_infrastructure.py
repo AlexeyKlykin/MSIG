@@ -1,7 +1,7 @@
 """
 Правила игры формируются в виде пронумерованых списков
 структура состоит из номера, названия и описания
-Интерфейс позволяет добавлять правила
+Интерфейс позволяет добавлять правила и возвращать
 """
 
 import logging
@@ -67,9 +67,6 @@ class DictGameRules(PointGameRules):
             for spl in self.sub_point_list:
                 spl.title = f"{self.id}.{spl.id}. {spl.title}"
         return self
-
-
-class TypeUndefind(Exception): ...
 
 
 class GameRulesInterface:

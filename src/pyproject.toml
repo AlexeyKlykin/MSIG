@@ -5,20 +5,21 @@ description = "Многопользовательская интерактивн
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "psycopg[binary]>=3.2.4",
+    "psycopg>=3.2.5",
     "pydantic>=2.10.6",
-    "pydantic-settings>=2.8.0",
+    "pydantic-settings>=2.8.1",
     "python-dotenv>=1.0.1",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest>=8.3.4",
+    "pytest>=8.3.5",
 ]
 
 [tool.pytest.ini_options]
 markers = [
     "interface_rules",
     "connect_db_rules",
-    "api_rules",
+    "controller_rules",
+    "items_game",
 ]

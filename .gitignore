@@ -15,3 +15,7 @@ src/game_rules.json
 game_rules.json
 config.json
 road_map.md
+game_rules.json
+src/game_engine/game_elements/__pycache__/*
+src/game_engine/game_elements/__pycache__
+*.pyc
