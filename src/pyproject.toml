@@ -1,0 +1,26 @@
+[project]
+name = "msig"
+version = "0.1.0"
+description = "Многопользовательская интерактивная игра для стримеров"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "psycopg>=3.2.5",
+    "pydantic>=2.10.6",
+    "pydantic-settings>=2.8.1",
+    "python-dotenv>=1.0.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "interface_rules",
+    "connect_db_rules",
+    "controller_rules",
+    "items_game",
+    "effect_game"
+]
