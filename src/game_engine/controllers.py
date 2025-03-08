@@ -12,9 +12,9 @@ from pydantic import BaseModel
 from game_engine.configs import DataBaseConfig, NotConfig
 from game_engine.connection_protocols import JsonConnectionEngine
 from game_engine.game_rules_infrastructure import (
-    DictGameRules,
     GameRulesInterface,
     PointGameRules,
+    SubPointGameRules,
 )
 
 
@@ -63,12 +63,16 @@ class GameRulesController:
         self._settings: DataBaseConfig = NotConfig()
 
     @staticmethod
-    def game_rules_sorted(collect: List[DictGameRules]) -> List[DictGameRules]:
+    def game_rules_sorted(collect: List[PointGameRules]) -> List[PointGameRules]:
+        """метод сортировки списка правил по id"""
+
         sort_lst = collect.sort(key=lambda x: x.id)
+
         if sort_lst is None:
             raise UndefindTypeError(
                 item="После сортировки возвращается None", item_type="None"
             )
+
         return sort_lst
 
     @property
@@ -77,6 +81,7 @@ class GameRulesController:
 
         if isinstance(self._settings, DataBaseConfig):
             return self._settings
+
         else:
             raise TypeError(
                 "self._settings is None. Нужно задать настройки перед вызовом правил"
@@ -119,7 +124,7 @@ class GameRulesController:
             raise TypeError("Тип settings None")
 
     @rules.setter
-    def rules(self, values: List[DictGameRules]):
+    def rules(self, values: List[PointGameRules]):
         """метод дабавить правило"""
 
         if isinstance(values, List):
@@ -148,7 +153,7 @@ class GameRulesController:
                         json set Ошибка сериализации"""
                     )
 
-    def get_by_idx(self, idx: int) -> DictGameRules:
+    def get_by_idx(self, idx: int) -> PointGameRules:
         """возврат правил по индексу"""
 
         try:
@@ -160,11 +165,11 @@ class GameRulesController:
                 f"Элемента с таким индексом = {idx} не существует в правилах"
             )
 
-    def set_by_idx(self, idx: int, value: DictGameRules):
+    def set_by_idx(self, idx: int, value: PointGameRules):
         """вставка правил по индексу"""
 
         try:
-            if isinstance(value, DictGameRules):
+            if isinstance(value, PointGameRules):
                 if self._game_rules.game_rules[idx] != value:
                     logger.warning(f"успешно записан {value} в Controller.get_by_idx")
                     self._game_rules.game_rules[idx] = value
@@ -190,7 +195,7 @@ class GameRulesController:
         except IndexError:
             raise IndexError(f"Ошибка. {idx} недопустимый индекс элемента")
 
-    def get_subpoint_by_idx(self, indexes: Tuple[int, int]) -> PointGameRules:
+    def get_subpoint_by_idx(self, indexes: Tuple[int, int]) -> SubPointGameRules:
         """метод отвечающий за отображение данных из списка подпунктов"""
 
         idx, subidx = indexes
@@ -202,13 +207,13 @@ class GameRulesController:
         except IndexError as err:
             raise IndexError(f"Ошибка индекса {err}")
 
-    def set_subpoint_by_idx(self, indexes: Tuple[int, int], value: PointGameRules):
+    def set_subpoint_by_idx(self, indexes: Tuple[int, int], value: SubPointGameRules):
         """метод записи данных в список подправил"""
 
         idx, subidx = indexes
 
         try:
-            if isinstance(value, PointGameRules):
+            if isinstance(value, SubPointGameRules):
                 self._game_rules[idx].sub_point_list[subidx] = value
 
         except IndexError:

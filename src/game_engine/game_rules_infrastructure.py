@@ -22,7 +22,15 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 
 
-class PointGameRules(BaseModel):
+class PointGameRulesMixin(BaseModel):
+    """Примесь для структуры игровых правил"""
+
+    id: Annotated[int, Field(gt=0, description="Номер для пункта правил")]
+    title: Annotated[str, Field(max_length=300, description="Название пункта правила")]
+    description: str
+
+
+class SubPointGameRules(PointGameRulesMixin):
     """
     Класс структуры подзаголовочного правила
     ---------------------------------------
@@ -31,12 +39,12 @@ class PointGameRules(BaseModel):
     description Описание правила 1
     """
 
-    id: Annotated[int, Field(gt=0, description="Номер для пункта правил")]
-    title: Annotated[str, Field(max_length=300, description="Название пункта правила")]
-    description: str
+    point_game_rules_id: Annotated[
+        int, Field(gt=0, description="Связь с родительским пунктом")
+    ]
 
 
-class DictGameRules(PointGameRules):
+class PointGameRules(PointGameRulesMixin):
     """
     Класс структуры заголовочных пунктов правил
     -------------------------------------------
@@ -47,9 +55,9 @@ class DictGameRules(PointGameRules):
     """
 
     sub_point_list: Annotated[
-        List[PointGameRules],
+        List[SubPointGameRules],
         Field(
-            default_factory=List[PointGameRules],
+            default_factory=List[SubPointGameRules],
             description="Список правил под заголовком",
         ),
     ]
@@ -73,13 +81,13 @@ class GameRulesInterface:
     """Интерфейс взаимодействия с json"""
 
     def __init__(self) -> None:
-        self._game_rules: List[DictGameRules] = []
+        self._game_rules: List[PointGameRules] = []
         self.idx: int = 0
 
     def __iter__(self):
         return self
 
-    def __next__(self) -> DictGameRules:
+    def __next__(self) -> PointGameRules:
         if self.idx < len(self._game_rules):
             res = self._game_rules[self.idx]
             self.idx += 1
@@ -87,13 +95,13 @@ class GameRulesInterface:
         else:
             raise StopIteration
 
-    def __getitem__(self, index: int) -> DictGameRules:
+    def __getitem__(self, index: int) -> PointGameRules:
         if 0 < len(self._game_rules) and index >= 0:
             return self._game_rules[index]
         else:
             raise IndexError("Индекс выходит за пределы допустимого значения")
 
-    def __setitem__(self, key: int, value: DictGameRules):
+    def __setitem__(self, key: int, value: PointGameRules):
         if isinstance(key, int) or key >= 0:
             self._game_rules[key] = value
 
@@ -102,14 +110,14 @@ class GameRulesInterface:
             del self._game_rules[key]
 
     @property
-    def game_rules(self) -> List[DictGameRules]:
+    def game_rules(self) -> List[PointGameRules]:
         """вернуть все данные"""
 
         logger.info("возврат правил")
         return self._game_rules
 
     @game_rules.setter
-    def game_rules(self, values: List[DictGameRules]):
+    def game_rules(self, values: List[PointGameRules]):
         """вставить данные"""
 
         if isinstance(values, List):

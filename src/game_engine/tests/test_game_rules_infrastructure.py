@@ -7,23 +7,29 @@ from game_engine.connection_protocols import JsonConnectionEngine
 from game_engine.game_rules_infrastructure import (
     PointGameRules,
     GameRulesInterface,
-    DictGameRules,
+    SubPointGameRules,
 )
 
 
 @fixture(scope="class")
 def config_infrastructure():
-    rule_one = PointGameRules(id=1, title="Правило", description="Описание правила 1")
-    rule_two = PointGameRules(id=2, title="Правило", description="Описание правила 2")
-    rule_thri = PointGameRules(id=3, title="Правило", description="Описание правила 3")
+    rule_one = SubPointGameRules(
+        point_game_rules_id=1, id=1, title="Правило", description="Описание правила 1"
+    )
+    rule_two = SubPointGameRules(
+        point_game_rules_id=1, id=2, title="Правило", description="Описание правила 2"
+    )
+    rule_thri = SubPointGameRules(
+        point_game_rules_id=1, id=3, title="Правило", description="Описание правила 3"
+    )
 
-    sub_point_list: List[PointGameRules] = [
+    sub_point_list: List[SubPointGameRules] = [
         rule_one,
         rule_two,
         rule_thri,
     ]
 
-    struct_rule = DictGameRules(
+    struct_rule = PointGameRules(
         id=1,
         title="Правило 1",
         description="Описание правила 1",
@@ -62,16 +68,19 @@ class TestGameRulesControler:
                     {
                         "description": "Описание правила 1",
                         "id": 1,
+                        "point_game_rules_id": 1,
                         "title": "1.1. Правило",
                     },
                     {
                         "description": "Описание правила 2",
                         "id": 2,
+                        "point_game_rules_id": 1,
                         "title": "1.2. Правило",
                     },
                     {
                         "description": "Описание правила 3",
                         "id": 3,
+                        "point_game_rules_id": 1,
                         "title": "1.3. Правило",
                     },
                 ],
@@ -94,16 +103,19 @@ class TestGameRulesControler:
                     {
                         "description": "Описание правила 1",
                         "id": 1,
+                        "point_game_rules_id": 1,
                         "title": "1.1. Правило",
                     },
                     {
                         "description": "Описание правила 2",
                         "id": 2,
+                        "point_game_rules_id": 1,
                         "title": "1.2. Правило",
                     },
                     {
                         "description": "Описание правила 3",
                         "id": 3,
+                        "point_game_rules_id": 1,
                         "title": "1.3. Правило",
                     },
                 ],
@@ -129,16 +141,19 @@ class TestGameRulesControler:
                     {
                         "description": "Описание правила 1",
                         "id": 1,
+                        "point_game_rules_id": 1,
                         "title": "1.1. Правило",
                     },
                     {
                         "description": "Описание правила 2",
                         "id": 2,
+                        "point_game_rules_id": 1,
                         "title": "1.2. Правило",
                     },
                     {
                         "description": "Описание правила 3",
                         "id": 3,
+                        "point_game_rules_id": 1,
                         "title": "1.3. Правило",
                     },
                 ],
@@ -161,16 +176,19 @@ class TestGameRulesControler:
                 {
                     "description": "Описание правила 1",
                     "id": 1,
+                    "point_game_rules_id": 1,
                     "title": "1.1. Правило",
                 },
                 {
                     "description": "Описание правила 2",
                     "id": 2,
+                    "point_game_rules_id": 1,
                     "title": "1.2. Правило",
                 },
                 {
                     "description": "Описание правила 3",
                     "id": 3,
+                    "point_game_rules_id": 1,
                     "title": "1.3. Правило",
                 },
             ],
@@ -182,23 +200,32 @@ class TestGameRulesControler:
     ):
         """тест: добавляем правило по индексу"""
 
-        rule_one = PointGameRules(
-            id=1, title="Правило", description="Описание правила 1"
+        rule_one = SubPointGameRules(
+            point_game_rules_id=1,
+            id=1,
+            title="Правило",
+            description="Описание правила 1",
         )
-        rule_two = PointGameRules(
-            id=2, title="Правило", description="Описание правила 2"
+        rule_two = SubPointGameRules(
+            point_game_rules_id=1,
+            id=2,
+            title="Правило",
+            description="Описание правила 2",
         )
-        rule_thri = PointGameRules(
-            id=3, title="Правило", description="Описание правила 3"
+        rule_thri = SubPointGameRules(
+            point_game_rules_id=1,
+            id=3,
+            title="Правило",
+            description="Описание правила 3",
         )
 
-        sub_point_list: List[PointGameRules] = [
+        sub_point_list: List[SubPointGameRules] = [
             rule_one,
             rule_two,
             rule_thri,
         ]
 
-        struct_rule = DictGameRules(
+        struct_rule = PointGameRules(
             id=2,
             title="Правило 2",
             description="Описание правила 2",
@@ -216,16 +243,19 @@ class TestGameRulesControler:
                 {
                     "description": "Описание правила 1",
                     "id": 1,
+                    "point_game_rules_id": 1,
                     "title": "2.1. Правило",
                 },
                 {
                     "description": "Описание правила 2",
                     "id": 2,
+                    "point_game_rules_id": 1,
                     "title": "2.2. Правило",
                 },
                 {
                     "description": "Описание правила 3",
                     "id": 3,
+                    "point_game_rules_id": 1,
                     "title": "2.3. Правило",
                 },
             ],
@@ -264,6 +294,7 @@ class TestGameRulesControler:
         assert controller.get_subpoint_by_idx((0, 1)).model_dump() == {
             "description": "Описание правила 2",
             "id": 2,
+            "point_game_rules_id": 1,
             "title": "2.2. Правило",
         }
 
@@ -273,12 +304,18 @@ class TestGameRulesControler:
         """записть субправила"""
 
         controller, _ = config_infrastructure
-        value = PointGameRules(id=4, title="Правило", description="Описание правила 4")
+        value = SubPointGameRules(
+            point_game_rules_id=1,
+            id=4,
+            title="Правило",
+            description="Описание правила 4",
+        )
         controller.set_subpoint_by_idx((0, 1), value)
 
         assert controller.get_subpoint_by_idx((0, 1)).model_dump() == {
             "description": "Описание правила 4",
             "id": 4,
+            "point_game_rules_id": 1,
             "title": "Правило",
         }
 
@@ -329,9 +366,11 @@ class TestConnectDatabase:
             assert read_js == [
                 '{"id":1,"title":"1. Правило 1","description":"Описание правила '
                 '1","sub_point_list":[{"id":1,"title":"1.1. '
-                'Правило","description":"Описание правила 1"},{"id":2,"title":"1.2. '
-                'Правило","description":"Описание правила 2"},{"id":3,"title":"1.3. '
-                'Правило","description":"Описание правила 3"}]}',
+                'Правило","description":"Описание правила '
+                '1","point_game_rules_id":1},{"id":2,"title":"1.2. '
+                'Правило","description":"Описание правила '
+                '2","point_game_rules_id":1},{"id":3,"title":"1.3. '
+                'Правило","description":"Описание правила 3","point_game_rules_id":1}]}',
             ]
 
 
@@ -354,16 +393,19 @@ class TestInterfaceGameRules:
                     {
                         "description": "Описание правила 1",
                         "id": 1,
+                        "point_game_rules_id": 1,
                         "title": "1.1. Правило",
                     },
                     {
                         "description": "Описание правила 2",
                         "id": 2,
+                        "point_game_rules_id": 1,
                         "title": "1.2. Правило",
                     },
                     {
                         "description": "Описание правила 3",
                         "id": 3,
+                        "point_game_rules_id": 1,
                         "title": "1.3. Правило",
                     },
                 ],
@@ -385,16 +427,19 @@ class TestInterfaceGameRules:
                 {
                     "description": "Описание правила 1",
                     "id": 1,
+                    "point_game_rules_id": 1,
                     "title": "1.1. Правило",
                 },
                 {
                     "description": "Описание правила 2",
                     "id": 2,
+                    "point_game_rules_id": 1,
                     "title": "1.2. Правило",
                 },
                 {
                     "description": "Описание правила 3",
                     "id": 3,
+                    "point_game_rules_id": 1,
                     "title": "1.3. Правило",
                 },
             ],
@@ -406,23 +451,32 @@ class TestInterfaceGameRules:
     ):
         """тест: добавление к правилам"""
 
-        rule_one = PointGameRules(
-            id=1, title="Правило", description="Описание правила 1"
+        rule_one = SubPointGameRules(
+            point_game_rules_id=2,
+            id=1,
+            title="Правило",
+            description="Описание правила 1",
         )
-        rule_two = PointGameRules(
-            id=2, title="Правило", description="Описание правила 2"
+        rule_two = SubPointGameRules(
+            point_game_rules_id=2,
+            id=2,
+            title="Правило",
+            description="Описание правила 2",
         )
-        rule_thri = PointGameRules(
-            id=3, title="Правило", description="Описание правила 3"
+        rule_thri = SubPointGameRules(
+            point_game_rules_id=2,
+            id=3,
+            title="Правило",
+            description="Описание правила 3",
         )
 
-        sub_point_list: List[PointGameRules] = [
+        sub_point_list: List[SubPointGameRules] = [
             rule_one,
             rule_two,
             rule_thri,
         ]
 
-        struct_rule = DictGameRules(
+        struct_rule = PointGameRules(
             id=2,
             title="Правило 2",
             description="Описание правила 2",
@@ -431,7 +485,7 @@ class TestInterfaceGameRules:
 
         _, setup_struct = config_infrastructure
 
-        lst: List[DictGameRules] = setup_struct.game_rules
+        lst: List[PointGameRules] = setup_struct.game_rules
         lst.append(struct_rule)
         setup_struct.game_rules = lst
 
@@ -443,16 +497,19 @@ class TestInterfaceGameRules:
                     {
                         "description": "Описание правила 1",
                         "id": 1,
+                        "point_game_rules_id": 1,
                         "title": "1.1. Правило",
                     },
                     {
                         "description": "Описание правила 2",
                         "id": 2,
+                        "point_game_rules_id": 1,
                         "title": "1.2. Правило",
                     },
                     {
                         "description": "Описание правила 3",
                         "id": 3,
+                        "point_game_rules_id": 1,
                         "title": "1.3. Правило",
                     },
                 ],
@@ -465,16 +522,19 @@ class TestInterfaceGameRules:
                     {
                         "description": "Описание правила 1",
                         "id": 1,
+                        "point_game_rules_id": 2,
                         "title": "2.1. Правило",
                     },
                     {
                         "description": "Описание правила 2",
                         "id": 2,
+                        "point_game_rules_id": 2,
                         "title": "2.2. Правило",
                     },
                     {
                         "description": "Описание правила 3",
                         "id": 3,
+                        "point_game_rules_id": 2,
                         "title": "2.3. Правило",
                     },
                 ],
