@@ -1,3 +1,7 @@
+
+
+![[connect_client_server.png]]
+
 Описание проекта MSIG (Multiplayer Streamer Interactive Game)
 
 	Идея игры получила вдохновение у DnD.

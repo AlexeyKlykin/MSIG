@@ -1,5 +1,11 @@
 .trash/*
 .obsidian/*
+__pycache__/
+*.py[oc]
+build/
+dist/
+whells/
+*.egg-info
 rgg-table_Kanban-доска.md
 schema_ver2.canvas
 src/game_engine/tests/__pycache__
